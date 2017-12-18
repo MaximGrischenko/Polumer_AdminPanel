@@ -1,0 +1,180 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer-particles/polymer-particles.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+<!-- Google web font  -->
+<link rel="import" href="assets/fonts/typography.html">
+
+<dom-module id="not-found-page">
+  <template>
+    <style is="custom-style">
+      :host {
+        display: block;
+        padding: 10px 20px;
+        --polymer-particles-background-color: #1f1f1f;
+        --polymer-particles-background-width: 100vw;
+        --polymer-particles-background-height: 100vh;
+      }
+
+      .flex-center-justified {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-justified);
+      }
+
+      .container {
+        height: 86vh;
+        position: relative;
+        box-sizing: border-box;
+        overflow: hidden !important;
+      }
+
+      .container .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      .content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        transform: translate(-50%, -50%);
+      }
+
+      .content .blink-txt {
+        margin: 30px 0;
+      }
+
+      .return-btn {
+        text-align: center;
+        width: 150px;
+        margin-top: 40px;
+        border: 2px solid #fff;
+        text-decoration: none;
+        outline: none;
+        display: inline-block;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        background: linear-gradient(to right, #d7d2cc, #304352);
+        background-size: 200% auto;
+        box-shadow: 0 0 20px rgba(0, 0, 0, .1);
+        transition: .5s;
+      }
+
+      .return-btn:hover {
+        background-position: right center;
+      }
+
+      .header-font-original-display {
+        @apply --header-font-original-display;
+        text-align: center;
+        color: #fff;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+      }
+
+      .main-font-original-display {
+        @apply --main-font-original-display;
+        text-align: center;
+        color: #fff;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+      }
+
+      .blink-txt {
+        -webkit-animation: squiggly-anim 0.34s linear infinite;
+        animation: squiggly-anim 0.34s linear infinite;
+      }
+
+      @keyframes squiggly-anim {
+        0% {
+          filter: url("#squiggly-0");
+        }
+
+        25% {
+          filter: url("#squiggly-1");
+        }
+
+        50% {
+          filter: url("#squiggly-2");
+        }
+
+        75% {
+          filter: url("#squiggly-3");
+        }
+
+        100% {
+          filter: url("#squiggly-4");
+        }
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+
+    <div class="container">
+      <polymer-particles class="overlay" json-url="src/assets/particles-config.json"></polymer-particles>
+      <div class="content">
+        <div class="flex-center-justified">
+          <img src="../src/assets/images/manifest/icon-96x96.png" alt=""></a>
+        </div>
+        <div class="header-font-original-display blink-txt">Oops! It was unexpected...</div>
+        <div class="main-font-original-display">You have some troubles. The Web page you're looking for does not
+          exist</br>Make sure you've typed the page may have moved.
+        </div>
+        <div class="flex-center-justified">
+          <a href="[[rootPath]]" class="return-btn">GO BACK</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+        <defs>
+          <filter id="squiggly-0">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="0"/>
+            <feDisplacementMap id="displacement" in="SourceGraphic" in2="noise" scale="3"/>
+          </filter>
+          <filter id="squiggly-1">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="1"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4"/>
+          </filter>
+          <filter id="squiggly-2">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="2"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3"/>
+          </filter>
+          <filter id="squiggly-3">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="3"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="4"/>
+          </filter>
+          <filter id="squiggly-4">
+            <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="4"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3"/>
+          </filter>
+        </defs>
+      </svg>
+    </div>
+  </template>
+
+  <script>
+    class NotFoundPage extends Polymer.Element {
+      static get is() {
+        return 'not-found-page';
+      }
+
+      static get properties() {
+        return {
+          rootPath: {
+            type: String,
+            value: '/',
+          },
+        };
+      }
+    }
+
+    window.customElements.define(NotFoundPage.is, NotFoundPage);
+  </script>
+</dom-module>

@@ -1,0 +1,39 @@
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="preview-wrapper">
+    <template>
+        <style include="iron-flex iron-flex-alignment"></style>
+
+        <div class="layout horizontal center">
+            <paper-icon-button icon="info-outline" on-tap="_previewDetails"></paper-icon-button>
+            <div class="flex">[[value]]</div>
+        </div>
+    </template>
+
+    <script>
+      class PreviewWrapper extends Polymer.Element {
+        static get is() {
+          return 'preview-wrapper';
+        }
+
+        static get properties() {
+          return {
+            value: {
+              type: String,
+            },
+            contentId: {
+              type: String,
+            },
+          }
+        }
+
+        _previewDetails() {
+          this.dispatchEvent(new CustomEvent('preview-display', {detail: {content: this.value}}));
+        }
+      }
+
+      window.customElements.define(PreviewWrapper.is, PreviewWrapper);
+    </script>
+</dom-module>

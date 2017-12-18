@@ -1,0 +1,127 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom module id="datatable-services">
+  <script>
+    class DatatableServices extends Polymer.Element {
+      static get is() {
+        return 'datatable-services';
+      }
+
+      static get properties() {
+        return {
+          _data: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            observer: '_handleDataChanged',
+          },
+          response: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            notify: true,
+          },
+          sortProperty: {
+            type: String,
+            observer: '_handleSortChanged',
+          },
+          filterProperty: {
+            type: String,
+            observer: '_handleFilterChanged',
+          },
+          page: {
+            type: Number,
+            notify: true,
+            value: 0,
+            observer: '_handlePageChanged',
+          },
+          size: {
+            type: Number,
+            notify: true,
+            value: 10,
+            observer: '_handleSizeChanged',
+          },
+          totalElements: {
+            type: Number,
+            notify: true,
+            value: 0,
+          },
+          totalPages: {
+            type: Number,
+            notify: true,
+            value: 0,
+          },
+        }
+      }
+
+      _handleDataChanged() {
+        this.totalElements = this._data.length;
+        this.totalPages = Math.ceil(this.totalElements / this.size);
+        this.response = this._data.slice(0, this.size);
+      }
+
+      _handleSortChanged(string) {
+        let properties = [];
+        properties = string.split(/,/);
+        let property = properties[0];
+        let direction = properties[1];
+        let compare;
+        switch (direction) {
+          case 'asc':
+            compare = function (rowA, rowB) {
+              return rowA[property] > rowB[property] ? 1 : rowA[property] < rowB[property] ? -1 : 0;
+            };
+            break;
+          case 'desc':
+            compare = function (rowA, rowB) {
+              return rowA[property] > rowB[property] ? -1 : rowA[property] < rowB[property] ? 1 : 0;
+            };
+            break;
+        }
+        this._data.sort(compare);
+        this.response = this._data.slice(0, this.size);
+      }
+
+      _handleFilterChanged(string) {
+
+        console.log(string);
+
+        let filters = [];
+        let result = [];
+        filters = string.split(/,/);
+        let filter = filters[0].toLowerCase();
+        let column = filters[1];
+        if (filter && column) {
+          for (let i = 0; i < this._data.length; i++) {
+            if (this._data[i][column].toLowerCase() === filter) {
+              result.push(this._data[i]);
+            }
+          }
+          this.response = result.slice(0, this.size);
+        } else {
+          this.response = this._data.slice(0, this.size);
+          return null;
+        }
+      }
+
+      _handleSizeChanged(size) {
+        if (this._data) {
+          this.response = this._data.slice(0, this.size);
+          this.totalPages = Math.ceil(this.totalElements / size);
+        }
+      }
+
+      _handlePageChanged(page) {
+        if (this._data) {
+          let begin = page * this.size;
+          let end = (page * this.size) + this.size;
+          this.response = this._data.slice(begin, end);
+        }
+      }
+    }
+
+    window.customElements.define(DatatableServices.is, DatatableServices);
+  </script>
+</dom>

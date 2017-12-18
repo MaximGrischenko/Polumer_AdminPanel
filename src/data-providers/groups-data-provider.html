@@ -1,0 +1,68 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/iron-meta/iron-meta.html">
+
+<dom-module id="groups-data-provider">
+  <template>
+    <iron-ajax
+        id="getGroupsAjax"
+        auto
+        method="get"
+        url="[[apiEndPoint]]/groups"
+        headers="[[header]]"
+        handle-as="json"
+        content-type="application/json"
+        on-response="_handleResponse"
+        on-error="_handleErrorResponse">
+    </iron-ajax>
+  </template>
+
+  <script>
+    class GroupsDataProvider extends Polymer.Element {
+      static get is() {
+        return 'groups-data-provider';
+      }
+
+      static get properties() {
+        return {
+          apiEndPoint: {
+            type: String,
+            value: 'http://proveng.cloud.provectus-it.com/rest/v1',
+          },
+          header: {
+            type: String,
+            computed: '_getHeader()',
+          },
+          response: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            notify: true,
+          },
+          selectedProperty: {
+            type: String,
+            observer: '_selectedPropertyChanged',
+          },
+          error: String,
+        }
+      }
+
+      _getHeader() {
+        let _token = new Polymer.IronMeta({key: 'token'}).value;
+        return {token: _token};
+      }
+
+      _handleResponse(event) {
+        this.response = event.detail.response.result;
+      }
+
+      _handleErrorResponse(event) {
+        this.error = event.detail.request.xhr.response;
+      }
+
+    }
+
+    window.customElements.define(GroupsDataProvider.is, GroupsDataProvider);
+  </script>
+</dom-module>

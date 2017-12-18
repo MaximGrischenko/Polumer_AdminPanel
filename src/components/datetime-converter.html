@@ -1,0 +1,77 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+
+<dom-module id="datetime-converter">
+
+  <template>
+    <template is="dom-if" if="[[toDate]]" restamp>
+      <span>[[dateString]]</span>
+    </template>
+
+    <template is="dom-if" if="[[toTime]]" restamp>
+      <span>[[timeString]]</span>
+    </template>
+  </template>
+
+  <script>
+    class DateTimeConverter extends Polymer.Element {
+      static get is() {
+        return 'datetime-converter';
+      }
+
+      static get properties() {
+        return {
+          dateString: {
+            type: String,
+            computed: '_convertToDate()'
+          },
+          timeString: {
+            type: String,
+            computed: '_convertToTime()'
+          },
+          shortFormat: {
+            type: Boolean,
+            value: false,
+          },
+          toTime: {
+            type: Boolean,
+          },
+          toDate: {
+            type: Boolean,
+          },
+          converting: {
+            type: Number,
+          },
+        }
+      }
+
+      _convertToTime() {
+        if (this.toTime) {
+          let seconds = parseInt((this.converting / 1000) % 60);
+          let minutes = parseInt((this.converting / (1000 * 60)) % 60);
+          let hours = parseInt((this.converting / (1000 * 60 * 60)) % 24);
+          hours = (hours < 10) ? "0" + hours : hours;
+          minutes = (minutes < 10) ? "0" + minutes : minutes;
+          seconds = (seconds < 10) ? "0" + seconds : seconds;
+          if (this.shortFormat) {
+            return hours + ":" + minutes + ":" + seconds;
+          } else {
+            return hours + "h " + minutes + " min " + seconds + " sec";
+          }
+        }
+      }
+
+      _convertToDate() {
+        if (this.toDate) {
+          if (this.shortFormat) {
+            return new Date(this.converting).toLocaleDateString();
+          } else {
+            return new Date(this.converting).toLocaleString();
+          }
+        }
+      }
+    }
+
+    window.customElements.define(DateTimeConverter.is, DateTimeConverter);
+  </script>
+</dom-module>

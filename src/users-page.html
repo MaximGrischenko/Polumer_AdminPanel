@@ -1,0 +1,553 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/lib/elements/dom-repeat.html">
+
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../bower_components/paper-datatable-api/paper-datatable-api.html">
+<link rel="import" href="../bower_components/paper-datatable-api/paper-datatable-api-column.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+
+<link rel="import" href="../bower_components/neon-animation/web-animations.html">
+<link rel="import" href="../bower_components/neon-animation/animations/scale-up-animation.html">
+<link rel="import" href="../bower_components/neon-animation/animations/fade-out-animation.html">
+
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="data-services/app-data.html">
+<link rel="import" href="data-services/datatable-services.html">
+<link rel="import" href="components/preview-wrapper.html">
+<link rel="import" href="components/datetime-converter.html">
+
+<dom-module id="users-page">
+  <template>
+    <style include="shared-styles iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+        padding: 10px;
+
+        --paper-datatable-api-checked-checkbox-color: var(--paper-pink-500);
+        --paper-datatable-apa-tr-selected-background: var(--paper-blue-grey-900);
+      }
+
+      .alert-error {
+        background: #ffcdd2;
+        border: 1px solid #f44336;
+        border-radius: 3px;
+        color: #333;
+        font-size: 14px;
+        padding: 10px;
+        margin: 20px 16px 0 16px;
+      }
+
+      paper-dropdown-menu {
+        width: 200px;
+        margin-right: 16px;
+      }
+
+      paper-card {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      paper-button {
+        padding: 0;
+        height: 40px;
+      }
+
+      paper-tooltip {
+        margin-top: 10px;
+      }
+
+      .flex-equal-justified {
+        @apply --layout-horizontal;
+        @apply --layout-justified;
+        @apply --layout-center;
+      }
+
+      .access-denied h1 {
+        font-size: 40px;
+      }
+
+      .access-denied p.first-line {
+        margin: 30px 0 0 0;
+      }
+
+      .access-denied p.second-line {
+        margin: 0 0 30px 0;
+      }
+
+      .access-denied a {
+        margin-bottom: 30px;
+        text-decoration: none;
+        text-transform: uppercase;
+        font-size: 24px;
+        color: #2f6fad;
+      }
+
+      .flex-center-justified {
+        @apply(--layout-vertical);
+        @apply(--layout-center-justified);
+        @apply(--layout-center);
+      }
+
+      .horizontal-layout {
+        @apply(--layout-horizontal);
+      }
+
+      .toolbar {
+        margin-left: 16px;
+      }
+
+      paper-dialog#previewUserDialog section {
+        height: 277px;
+        min-width: 600px;
+      }
+
+      paper-dialog#previewUserDialog section paper-dialog-scrollable {
+        background-color: #e2e1e0;
+        height: 100%;
+      }
+
+      paper-dialog#previewUserDialog paper-dialog-scrollable .user-profile {
+        margin: 5px;
+        padding: 5px;
+        background-color: #fff;
+        border-radius: 2px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+      }
+
+      paper-dialog#previewUserDialog paper-dialog-scrollable .user-profile:last-child {
+        margin-bottom: 0;
+      }
+
+      paper-dialog#previewUserDialog paper-dialog-scrollable .user-profile:after {
+        content: "";
+        display: block;
+        clear: both;
+      }
+
+      paper-dialog#previewUserDialog paper-dialog-scrollable .image-profile-container {
+        width: 200px;
+        height: 250px;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        padding: 3px;
+        margin-right: 15px;
+      }
+    </style>
+
+    <iron-localstorage
+        name="user-storage"
+        value="{{storedUser}}"
+        on-iron-localstorage-load="initStoredUser">
+    </iron-localstorage>
+    <app-data key="userData" data="{{storedUser}}"></app-data>
+
+    <iron-ajax
+        id="getUsersAjax"
+        method="get"
+        url="[[apiEndPoint]]/users"
+        handle-as="json"
+        caontent-type="application/json"
+        on-response="_handleUsersResponse"
+        on-error="_handleUsersErrorResponse">
+    </iron-ajax>
+
+    <datatable-services
+        _data="{{responseUsers}}"
+        response="{{mapping_data}}"
+        page="{{currentPage}}"
+        size="{{currentSize}}"
+        total-elements="{{totalElements}}"
+        total-pages="{{totalPages}}"
+        sort-property="[[sortProperty]]"
+        filter-property="[[filterProperty]]">
+    </datatable-services>
+
+    <template is="dom-if" if="[[error]]">
+      <p class="alert-error"><strong>Error. </strong> [[error]]</p>
+    </template>
+
+    <paper-dialog id="editUserDialog"
+                  modal
+                  entry-animation="scale-up-animation"
+                  exit-animation="fade-out-animation"
+                  on-iron-overlay-closed="dismissEditDialog">
+      <link rel="stylesheet" type="text/css" href="src/assets/styles/user-card.css">
+      <h3>
+        <iron-icon icon="assignment-ind"></iron-icon>
+        USERS EDITOR
+      </h3>
+      <section>
+        <paper-dialog-scrollable>
+          <template is="dom-repeat" items="{{selectedUsers}}" as="user">
+            <div class="user-profile">
+              <div class="horizontal-layout">
+                <div class="image-profile-container"
+                     style$="background-image: url({{user.url}});">
+                </div>
+                <div class="user-info-container">
+                  <h3>Personal information</h3>
+                  <p><b>First name:</b> {{user.firstName}}</p>
+                  <p><b>Last name:</b> {{user.lastName}}</p>
+                  <paper-input no-label-float value="{{user.level}}">
+                    <p slot="prefix"><b>English level:</b></p>
+                  </paper-input>
+                  <p><b>Last modified: </b>
+                    <datetime-converter short-format to-date converting="{{user.modifyDtm}}"></datetime-converter>
+                  </p>
+                </div>
+              </div>
+              <div class="daybook-profile-container">
+                <h3>Day book</h3>
+                <template is="dom-repeat" items="{{user.dayBooks}}" as="dayBook">
+                  <p>
+                    <b>Test:</b> {{dayBook.type}}<b>;</b>
+                    <b>Mark:</b> {{dayBook.mark}}<b>;</b>
+                    <b>Date: </b>
+                    <datetime-converter to-date converting="{{dayBook.markDate}}"></datetime-converter>
+                  </p>
+                </template>
+              </div>
+            </div>
+          </template>
+        </paper-dialog-scrollable>
+      </section>
+      <div class="buttons">
+        <paper-button dialog-confirm autofocus>Confirm</paper-button>
+        <paper-button dialog-dismiss autofocus>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="previewUserDialog"
+                  entry-animation="scale-up-animation"
+                  exit-animation="fade-out-animation">
+      <h3>
+        <iron-icon icon="social:person"></iron-icon>
+        USER PREVIEW
+      </h3>
+      <section>
+        <paper-dialog-scrollable>
+          <div class="user-profile">
+            <div class="horizontal-layout">
+              <div class="image-profile-container"
+                   style$="background-image: url({{selectedUser.url}});">
+              </div>
+              <div class="user-info-container">
+                <h3>Personal information</h3>
+                <p><b>First name:</b> {{selectedUser.firstName}}</p>
+                <p><b>Last name:</b> {{selectedUser.lastName}}</p>
+                <p><b>English level:</b> {{selectedUser.level}}</p>
+                <p><b>Last modified:</b>
+                  <datetime-converter short-format to-date converting="{{selectedUser.modifyDtm}}"></datetime-converter>
+                </p>
+              </div>
+            </div>
+            <div class="daybook-profile-container">
+              <h3>Day book</h3>
+              <template is="dom-repeat" items="{{selectedUser.dayBooks}}" as="dayBook">
+                <p>
+                  <b>Test:</b> {{dayBook.type}}<b>;</b>
+                  <b>Mark:</b> {{dayBook.mark}}<b>;</b>
+                  <b>Date: </b>
+                  <datetime-converter to-date converting="{{dayBook.markDate}}"></datetime-converter>
+                </p>
+              </template>
+            </div>
+          </div>
+        </paper-dialog-scrollable>
+      </section>
+    </paper-dialog>
+
+    <div hidden$="[[_isAdministrator]]" class="access-denied">
+      <paper-card>
+        <div class="flex-center-justified">
+          <h1>Access denied</h1>
+          <div style="border: 1px solid #e3e3e3; width: 80%;"></div>
+          <p class="first-line">You do not have permission to access this page.</p>
+          <p class="second-line">Please contact your Site Administrator(s) to request access.</p>
+          <a href="/">Go back</a>
+        </div>
+      </paper-card>
+    </div>
+
+    <div hidden$="[[!_isAdministrator]]" class="access-allowed">
+      <paper-card heading="User list">
+        <div class="flex-equal-justified">
+          <div class="toolbar">
+            <span id="parentEdit">
+            <paper-button disabled id="editButton" raised on-click="handleOpenEditDialog">
+              <iron-icon icon="create"></iron-icon>
+            </paper-button>
+            </span>
+            <paper-tooltip position="right bottom" for="parentEdit">Edit selected users</paper-tooltip>
+            <span id="parentDelete">
+              <paper-button disabled id="deleteButton" raised on-click="handleDeleteRows">
+                <iron-icon icon="delete-sweep"></iron-icon>
+              </paper-button>
+            </span>
+            <paper-tooltip position="right bottom" for="parentDelete">Delete selected users</paper-tooltip>
+          </div>
+          <div class="menubar">
+            <paper-dropdown-menu class="end-justified" id="role_menu" label="Role">
+              <paper-listbox slot="dropdown-content" attr-for-selected="label"
+                             selected="{{selectedProperty}}">
+                <template is="dom-repeat" items="{{selectionProperty}}">
+                  <paper-item label="{{item}}">{{item}}</paper-item>
+                </template>
+              </paper-listbox>
+            </paper-dropdown-menu>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <paper-datatable-api
+              paginate
+              selectable
+              filters
+              language="en-us"
+              page="{{currentPage}}"
+              size="{{currentSize}}"
+              available-size="[10, 25, 50, 100]"
+              toggle-columns="{{toggleColumns}}"
+              on-sort="_handleSort"
+              on-filter="_handleFilter"
+              selected-rows={{selectedRows}}
+              on-selection-changed="_handleSelectionChanged"
+              total-elements="[[totalElements]]"
+              total-pages="[[totalPages]]"
+              data="[[mapping_data]]">
+            <paper-datatable-api-column
+                header="id"
+                property="id"
+                draggable-column
+                sortable>
+              <template>
+                <preview-wrapper value="{{value}}"
+                                 on-preview-display="_handlePreviewDisplay">
+                </preview-wrapper>
+              </template>
+            </paper-datatable-api-column>
+            <paper-datatable-api-column
+                header="First Name"
+                property="firstName"
+                draggable-column
+                sortable
+                filter>
+              <template>
+                <span>{{value}}</span>
+              </template>
+            </paper-datatable-api-column>
+            <paper-datatable-api-column
+                header="Last Name"
+                property="lastName"
+                draggable-column
+                sortable
+                filter>
+              <template>
+                <span>{{value}}</span>
+              </template>
+            </paper-datatable-api-column>
+            <paper-datatable-api-column
+                header="English Level"
+                property="level"
+                draggable-column
+                sortable
+                filter>
+              <template>
+                <span>{{value}}</span>
+              </template>
+            </paper-datatable-api-column>
+          </paper-datatable-api>
+        </div>
+      </paper-card>
+    </div>
+
+  </template>
+
+  <script>
+    class UsersPage extends Polymer.Element {
+      static get is() {
+        return 'users-page';
+      }
+
+      static get observers() {
+        return [
+          'selectedUsersChanged(selectedUsers.length)'
+        ]
+      }
+
+      static get properties() {
+        return {
+          apiEndPoint: {
+            type: String,
+            value: 'http://proveng.cloud.provectus-it.com/rest/v1',
+          },
+          responseUsers: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            notify: true,
+          },
+          error: String,
+          accessFilter: {
+            type: String,
+            value: 'Administrator,Teacher',
+          },
+          _isAdministrator: {
+            type: Boolean,
+            value: false,
+          },
+          selectionProperty: {
+            type: Array,
+            value: function () {
+              return ['Student', 'Teacher', 'Administrator', 'Guest'];
+            },
+          },
+          selectedProperty: {
+            type: String,
+            value: 'Student',
+            observer: 'selectedPropertyChanged',
+          },
+          currentPage: {
+            type: Number,
+            notify: true,
+            observer: 'currentPageChanged',
+          },
+          sortProperty: {
+            type: String,
+          },
+          filterProperty: {
+            type: String,
+          },
+          selectedRows: {
+            type: Array,
+          },
+          selectedUsers: {
+            type: Array,
+            value: [],
+            notify: true,
+          },
+          selectedUser: {
+            type: Array,
+            value: [],
+            notify: true,
+          },
+        }
+      }
+
+      _getPermission(filter) {
+        let with_access = [];
+        with_access = filter.split(/,/);
+
+        let permission = this.storedUser.roles.findIndex(function (x) {
+          return x['name'].toLowerCase() === with_access[0].toLowerCase() || x['name'].toLowerCase() === with_access[1].toLowerCase();
+        });
+
+        if (permission !== -1) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      initStoredUser() {
+        if (this.storedUser.isAuthorized) {
+          this._isAdministrator = this._getPermission(this.accessFilter);
+
+          if (this._isAdministrator) {
+            this.$.getUsersAjax.set('headers', {'token': this.storedUser.userToken});
+            this.$.getUsersAjax.set('params', {'roleName': this.selectedProperty});
+            this.$.getUsersAjax.generateRequest();
+          }
+        }
+      }
+
+      selectedPropertyChanged(selected) {
+        if (this._isAdministrator) {
+          this.$.getUsersAjax.set('headers', {'token': this.storedUser.userToken});
+          this.$.getUsersAjax.set('params', {'roleName': selected});
+          this.$.getUsersAjax.generateRequest();
+        }
+      }
+
+      selectedUsersChanged(event) {
+        if (event.valueOf() === 0) {
+          this.$.editButton.disabled = true;
+          this.$.deleteButton.disabled = true;
+        } else {
+          this.$.editButton.disabled = false;
+          this.$.deleteButton.disabled = false;
+        }
+      }
+
+      _handleUsersResponse(event) {
+        this.responseUsers = event.detail.response.result;
+      }
+
+      _handleUsersErrorResponse(event) {
+        let response = event.detail.request.xhr.response;
+        this.error = "Code: " + response.error.code + " Description: " + response.error.description;
+      }
+
+      _handleSort(event) {
+        this.sortProperty = event.detail.sort.property + ',' + event.detail.sort.direction;
+        this.set('selectedUsers.length', 0);
+      }
+
+      _handleFilter(event) {
+        this.filterProperty = event.detail.filter.value + ',' + event.detail.filter.property;
+        this.set('selectedUsers.length', 0);
+      }
+
+      currentPageChanged() {
+        this.set('selectedUsers.length', 0);
+      }
+
+      _handleSelectionChanged(event) {
+        if (event.detail.selected) {
+          this.push('selectedUsers', event.detail.data);
+        } else {
+          let index = this.selectedUsers.indexOf(event.detail.data);
+          this.splice('selectedUsers', index, 1);
+        }
+      }
+
+      handleOpenEditDialog(element) {
+        let body = document.querySelector('body');
+        Polymer.dom(body).appendChild(this.$.editUserDialog);
+        this.$.editUserDialog.open();
+      }
+
+      _handlePreviewDisplay(event) {
+        let index = this.responseUsers.findIndex(function (x) {
+          return x['id'] === event.detail.content;
+        });
+
+        if (index !== -1) {
+          this.selectedUser = this.responseUsers[index];
+        } else {
+          return;
+        }
+        this.$.previewUserDialog.open();
+      }
+
+      dismissEditDialog(event) {
+        if (event.detail.confirmed) {
+
+        }
+      }
+    }
+
+    window.customElements.define(UsersPage.is, UsersPage);
+  </script>
+</dom-module>

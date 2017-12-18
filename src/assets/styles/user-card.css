@@ -1,0 +1,63 @@
+html /deep/ paper-dialog#editUserDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-30%, -30%);
+}
+
+html /deep/ paper-dialog#editUserDialog section {
+  height: 277px;
+  min-width: 600px;
+}
+
+html /deep/ paper-dialog#editUserDialog section paper-dialog-scrollable {
+  background-color: #e2e1e0;
+  height: 100%;
+}
+
+html /deep/ paper-dialog#editUserDialog .buttons {
+  padding: 0;
+  margin-right: 20px;
+}
+
+html /deep/ paper-dialog#editUserDialog paper-dialog-scrollable .user-profile {
+  margin: 5px;
+  padding: 5px;
+  background-color: #fff;
+  border-radius: 2px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+html /deep/ paper-dialog#editUserDialog paper-dialog-scrollable .user-profile .horizontal-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+html /deep/ paper-dialog#editUserDialog paper-dialog-scrollable .user-profile:last-child {
+  margin-bottom: 0;
+}
+
+html /deep/ paper-dialog-scrollable .user-profile:after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+html /deep/ paper-dialog#editUserDialog paper-dialog-scrollable .image-profile-container {
+  width: 200px;
+  height: 250px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  padding: 3px;
+  margin-right: 15px;
+}
+
+html /deep/ paper-dialog#editUserDialog paper-dialog-scrollable paper-input-container {
+  height: 40px;
+}
+
+html /deep/ paper-dialog-scrollable .daybook-profile-container {
+
+}

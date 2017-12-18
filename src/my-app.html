@@ -1,0 +1,358 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/google-signin/google-signin.html">
+<link rel="import" href="../bower_components/google-signin/google-signin-aware.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="../bower_components/iron-meta/iron-meta.html">
+<link rel="import" href="data-services/app-data.html">
+
+<link rel="lazy-import" href="home-page.html">
+<link rel="lazy-import" href="users-page.html">
+<link rel="lazy-import" href="groups-page.html">
+<link rel="lazy-import" href="not-found-page.html">
+<link rel="lazy-import" href="test-page.html">
+
+<dom-module id="my-app">
+    <template>
+        <style>
+            :host {
+                --app-primary-color: #4285f4;
+                --app-secondary-color: black;
+
+                display: block;
+            }
+
+            app-drawer-layout:not([narrow]) [drawer-toggle] {
+                display: none;
+            }
+
+            app-header {
+                color: #fff;
+                background-color: var(--app-primary-color);
+                min-height: 80px;
+            }
+
+            app-header paper-icon-button {
+                --paper-icon-button-ink-color: white;
+            }
+
+            .flex {
+                @apply --layout-horizontal;
+                @apply --layout-center;
+                margin-top: 5px;
+            }
+
+            .user-container > img {
+                margin: 0 20px;
+                max-height: 52px;
+                max-width: 52px;
+                border-radius: 50%;
+            }
+
+            .drawer-list {
+                margin: 0 20px;
+            }
+
+            .drawer-list a {
+                display: block;
+                padding: 0 16px;
+                text-decoration: none;
+                color: var(--app-secondary-color);
+                line-height: 40px;
+            }
+
+            .drawer-list a.iron-selected {
+                color: black;
+                font-weight: bold;
+            }
+
+            .iron-selected a {
+                color: black;
+                font-weight: bold;
+            }
+
+            .alert-error {
+                background: #ffcdd2;
+                border: 1px solid #f44336;
+                border-radius: 3px;
+                color: #333;
+                font-size: 14px;
+                padding: 10px;
+                margin: 20px 16px 0 16px;
+            }
+        </style>
+
+        <iron-localstorage name="user-storage" value="{{storedUser}}"></iron-localstorage>
+        <app-data key="userData" data="{{storedUser}}"></app-data>
+
+        <iron-ajax id="loginAjax"
+                   method="post"
+                   content-type="application/json"
+                   handle-as="json"
+                   on-response="_handleLoginResponse"
+                   on-error="_handleErrorResponse">
+        </iron-ajax>
+
+        <iron-ajax id="logoutAjax"
+                   method="post"
+                   content-type="application/json"
+                   handle-as="json"
+                   on-response="_handleLogoutResponse">
+        </iron-ajax>
+
+        <iron-ajax id="getUserAjax"
+                   method="get"
+                   url="[[apiEndPoint]]/user"
+                   content-type="application/json"
+                   handle-as="json"
+                   on-response="_handleUserResponse"
+                   on-error="_handleErrorResponse">
+        </iron-ajax>
+
+        <app-location
+                route="{{route}}"
+                url-space-regex="^[[rootPath]]">
+        </app-location>
+
+        <app-route
+                route="{{route}}"
+                pattern="/:page"
+                data="{{routeData}}"
+                tail="{{subroute}}">
+        </app-route>
+
+        <app-drawer-layout fullbleed narrow="{{narrow}}">
+            <!-- Drawer content -->
+            <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
+                <app-toolbar>Dashboard</app-toolbar>
+                <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+                    <a name="home-page" href="/home-page">Home Page</a>
+                    <div name="users-page" hidden$="[[!_isAdministrator]]">
+                        <a href="/users-page">User List</a>
+                    </div>
+                    <div name="groups-page" hidden$="[[!_isAdministrator]]">
+                        <a href="/groups-page">Group List</a>
+                    </div>
+                    <div name="test-page" hidden$="[[!storedUser.isAuthorized]]">
+                      <a href="/test-page">English Tests</a>
+                    </div>
+                </iron-selector>
+            </app-drawer>
+
+            <!-- Main content -->
+            <app-header-layout has-scrolling-region>
+                <app-header slot="header" condenses reveals effects="parallax-background">
+                    <app-toolbar>
+                        <paper-icon-button icon="icons:dashboard" drawer-toggle></paper-icon-button>
+                        <div main-title>Admin Panel</div>
+                        <div class="flex">
+                            <template is="dom-if" if="{{storedUser.isAuthorized}}" restamp>
+                                <div class="user-container flex">{{storedUser.firstName}} {{storedUser.lastName}}
+                                    <img src="{{storedUser.url}}">
+                                </div>
+                            </template>
+                            <google-signin
+                                    brand="google"
+                                    client-id="352789647391-vq04b3va9ht4ie1ggig3r4crlfn8946r.apps.googleusercontent.com"
+                                    is-authorized="[[storedUser.isAuthorized]]"
+                                    hosted-domain="">
+                            </google-signin>
+                            <google-signin-aware
+                                    id="awareness"
+                                    scopes="https://www.googleapis.com/auth/drive"
+                                    is-authorized="[[storedUser.isAuthorized]]"
+                                    openid-prompt="[[openidPrompt]]"
+                                    on-google-signin-aware-success="handleSignIn"
+                                    on-google-signin-offline-success="handleOffline"
+                                    on-google-signin-aware-signed-out="handleSignOut">
+                            </google-signin-aware>
+                        </div>
+                    </app-toolbar>
+                </app-header>
+
+                <template is="dom-if" if="[[error]]">
+                    <p class="alert-error"><strong>Error. </strong> [[error]]</p>
+                </template>
+
+                <iron-pages
+                        selected="[[page]]"
+                        attr-for-selected="name"
+                        fallback-selection="not-found-page"
+                        role="main">
+                    <home-page name="home-page"></home-page>
+                    <users-page name="users-page"></users-page>
+                    <groups-page name="groups-page"></groups-page>
+                    <test-page name="test-page"></test-page>
+                    <not-found-page name="not-found-page"></not-found-page>
+                </iron-pages>
+            </app-header-layout>
+        </app-drawer-layout>
+    </template>
+
+    <script>
+      class MyApp extends Polymer.Element {
+        static get is() {
+          return 'my-app';
+        }
+
+        static get properties() {
+          return {
+            page: {
+              type: String,
+              reflectToAttribute: true,
+              observer: '_pageChanged',
+            },
+            openidPrompt: {
+              type: String,
+              value: "select_account",
+            },
+            accessFilter: {
+              type: String,
+              value: 'Administrator,Teacher',
+            },
+            apiEndPoint: {
+              type: String,
+              value: 'http://proveng.cloud.provectus-it.com/rest/v1',
+            },
+            storedUser: {
+              type: Object,
+              notify: true,
+            },
+            _isAdministrator: {
+              type: Boolean,
+              value: false,
+            },
+            localToken: String,
+            routeData: Object,
+            subroute: String,
+            rootPath: String,
+            error: String,
+          };
+        }
+
+        static get observers() {
+          return [
+            '_routePageChanged(routeData.page)',
+          ];
+        }
+
+        _routePageChanged(page) {
+          this.page = page || 'home-page';
+          if (!this.$.drawer.persistent) {
+            this.$.drawer.close();
+          }
+        }
+
+        _pageChanged(page) {
+          var resolvedPageUrl = this.resolveUrl(page + '.html');
+          Polymer.importHref(
+            resolvedPageUrl,
+            null,
+            this._showPage404.bind(this),
+            true);
+        }
+
+        _showPage404() {
+          this.page = 'not-found-page';
+        }
+
+        _getPermission(filter) {
+          let with_access = [];
+          with_access = filter.split(/,/);
+
+          let permission = this.storedUser.roles.findIndex(function (x) {
+            return x['name'].toLowerCase() === with_access[0].toLowerCase() || x['name'].toLowerCase() === with_access[1].toLowerCase();
+          });
+
+          if (permission !== -1) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+
+        handleSignIn(response) {
+          let accessToken = response.detail.access_token;
+          //  let user = gapi.auth2.getAuthInstance()['currentUser'].get();
+          //  this.userName = user.getBasicProfile().getName();
+          //  this.userAvatar = user.getBasicProfile().getImageUrl();
+          //  this.userEmail = user.getBasicProfile().getEmail();
+          if (accessToken) {
+            this.$.loginAjax.url = this.apiEndPoint + "/auth-by-google";
+            this.$.loginAjax.set('body', {'gToken': accessToken});
+            this.$.loginAjax.generateRequest();
+          }
+        }
+
+        _handleLoginResponse(event) {
+          this.localToken = event.detail.response.result.token;
+          this.$.getUserAjax.set('headers', {'token': this.localToken});
+          this.$.getUserAjax.generateRequest();
+        }
+
+        _handleUserResponse(event) {
+          let response = event.detail.response.result;
+
+          if (response) {
+            this.storedUser = {
+              dayBooks: response.dayBooks,
+              id: response.id,
+              firstName: response.firstName,
+              lastName: response.lastName,
+              loginName: response.loginName,
+              inviteDate: response.inviteDate,
+              url: response.url,
+              roles: response.roles,
+              isAuthorized: true,
+              userToken: this.localToken,
+            };
+            this._isAdministrator = this._getPermission(this.accessFilter);
+            this.error = '';
+          }
+        }
+
+        handleSignOut(response) {
+          if(this.storedUser) {
+            this.$.logoutAjax.url = this.apiEndPoint + "/logout";
+            this.$.logoutAjax.set('headers', {'token': this.storedUser.userToken});
+            this.$.logoutAjax.generateRequest();
+          } else {
+            this.error = '';
+            this.storedUser = null;
+            this._isAdministrator = false;
+          //  this.set('route.path', '/');
+          }
+        }
+
+        _handleLogoutResponse(event) {
+          let response = event.detail.response.result;
+          if (response.message === 'OK') {
+            this.error = '';
+            this.storedUser = null;
+            this._isAdministrator = false;
+            this.set('route.path', '/');
+          }
+        }
+
+        _handleErrorResponse(event) {
+          let response = event.detail.request.xhr.response;
+          this.error = "Code: " + response.error.code + " Description: " + response.error.description;
+        }
+      }
+
+      window.customElements.define(MyApp.is, MyApp);
+    </script>
+</dom-module>

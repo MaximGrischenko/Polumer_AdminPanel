@@ -1,0 +1,83 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/iron-localstorage/iron-localstorage.html">
+
+<link rel="import" href="../data-services/app-data.html">
+
+<dom-module id="users-data-provider">
+  <template>
+
+    <iron-localstorage
+        name="user-storage"
+        value="{{storedUser}}"
+        on-iron-localstorage-load="initStoredUser"></iron-localstorage>
+    <app-data key="userData" data="{{storedUser}}"></app-data>
+
+    <iron-ajax
+        id="getUsersAjax"
+        method="get"
+        url="[[apiEndPoint]]/users"
+        handle-as="json"
+        content-type="application/json"
+        on-response="_handleResponse"
+        on-error="_handleErrorResponse">
+    </iron-ajax>
+  </template>
+
+  <script>
+    class UsersDataProvider extends Polymer.Element {
+      static get is() {
+        return 'users-data-provider';
+      }
+
+      static get properties() {
+        return {
+          apiEndPoint: {
+            type: String,
+            value: 'http://proveng.cloud.provectus-it.com/rest/v1',
+          },
+          response: {
+            type: Array,
+            value: function () {
+              return [];
+            },
+            notify: true,
+          },
+          selectedProperty: {
+            type: String,
+            observer: '_selectedPropertyChanged',
+          },
+          storedUser: {
+            type: Object,
+          },
+          error: String,
+        }
+      }
+
+      initStoredUser() {
+        if (this.storedUser.isAuthorized) {
+          this.$.getUsersAjax.set('headers', {'token': this.storedUser.userToken});
+          this.$.getUsersAjax.set('params', {'roleName': 'Student'});
+          this.$.getUsersAjax.generateRequest();
+        }
+      }
+
+      _selectedPropertyChanged(selected) {
+        if (this.storedUser.isAuthorized) {
+          this.$.getUsersAjax.set('headers', {'token': this.storedUser.userToken});
+          this.$.getUsersAjax.set('params', {'roleName': selected});
+        }
+      }
+
+      _handleResponse(event) {
+        this.response = event.detail.response.result;
+      }
+
+      _handleErrorResponse(event) {
+        this.error = JSON.parse(event.detail.request.xhr.response);
+      }
+    }
+
+    window.customElements.define(UsersDataProvider.is, UsersDataProvider);
+  </script>
+</dom-module>

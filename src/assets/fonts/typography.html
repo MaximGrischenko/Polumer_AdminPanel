@@ -1,0 +1,41 @@
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="font-Montserrat/Montserrat.html">
+<link rel="import" href="font-OpenSans/OpenSans.html">
+
+<custom-style>
+  <style is="custom-style">
+    html {
+      --font-common-base: {
+        font-family: 'Open Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      };
+
+      --font-common-header: {
+        font-family: 'Montserrat', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      };
+
+      --font-common-nowrap: {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      };
+
+      --header-font-original-display: {
+        @apply --font-common-header;
+        font-size: 60px;
+        line-height: 1;
+        letter-spacing: 1px;
+        font-weight: 700;
+      };
+
+      --main-font-original-display: {
+        @apply --font-common-base;
+        font-size: 17px;
+        letter-spacing: 1px;
+        line-height: 1.2;
+        font-weight: 300;
+      }
+    }
+  </style>
+</custom-style>
